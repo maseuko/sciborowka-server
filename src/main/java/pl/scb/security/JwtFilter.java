@@ -35,14 +35,9 @@ public class JwtFilter extends OncePerRequestFilter {
         final String jwtAuth = request.getHeader("auth");
         final String jwtRefresh = request.getHeader("refresh");
 
-        if(jwtAuth == null || jwtRefresh == null){
+        if(jwtAuth == null || !this.jwtUtil.checkForTokenValidity(jwtAuth) || jwtRefresh == null || !this.jwtUtil.checkForTokensKeyPairExistence(jwtAuth, jwtRefresh)){
             filterChain.doFilter(request, response);
         }else{
-            if(!this.jwtUtil.checkForTokenValidity(jwtAuth) ||
-               !this.jwtUtil.checkForTokenValidity(jwtRefresh) ||
-               !this.jwtUtil.checkForTokensKeyPairExistence(jwtAuth, jwtRefresh)){
-                filterChain.doFilter(request, response);
-            }
             long UID = this.jwtUtil.getUserIdFromToken(jwtAuth);
             UserDetails details;
             Optional<AdminModel> admin = this.adminRepo.findById(UID);

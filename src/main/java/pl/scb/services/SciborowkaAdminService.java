@@ -84,4 +84,8 @@ public class SciborowkaAdminService {
         this.adminRepo.save(adminModel);
         return true;
     }
+
+//    public boolean updateMainVideo(){
+//        return this.imageService.uploadImage();
+//    }
 }

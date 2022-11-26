@@ -1,7 +1,6 @@
 package pl.scb.models;
 
 import lombok.NoArgsConstructor;
-import org.springframework.web.bind.annotation.RequestAttribute;
 
 import javax.persistence.*;
 

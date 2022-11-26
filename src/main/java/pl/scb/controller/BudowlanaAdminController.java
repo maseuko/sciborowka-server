@@ -9,13 +9,14 @@ import pl.scb.models.ResponseMessage;
 import pl.scb.services.BudowlanaAdminService;
 
 @RestController
+@CrossOrigin
 @RequestMapping("/budowlanka-admin")
 public class BudowlanaAdminController {
     @Autowired
     private BudowlanaAdminService budowlanaAdminService;
 
     @PostMapping("/upload-images")
-    public ResponseEntity<Object> uploadCategoryImage(@RequestParam("category") String categoryName, @RequestAttribute("files") MultipartFile[] files){
+    public ResponseEntity<Object> uploadCategoryImage(@RequestParam("category") String categoryName, @RequestParam("files") MultipartFile[] files){
         if(this.budowlanaAdminService.uploadImage(categoryName, files)){
             return new ResponseMessage(HttpStatus.BAD_REQUEST).sendMessage("Images couldn't be uploaded.");
         }

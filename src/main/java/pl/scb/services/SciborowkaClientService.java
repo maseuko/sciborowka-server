@@ -23,9 +23,8 @@ public class SciborowkaClientService {
     @Autowired
     private ImageService imageService;
     public List<BlogRecord> getPosts(int page, int limit){
-
         List<BlogRecord> blogPosts = new ArrayList<>();
-        this.blogPostRepo.findAll(PageRequest.of(page, limit)).forEach(blog -> {
+        this.blogPostRepo.findAllReverse(PageRequest.of(page, limit)).forEach(blog -> {
             List<Images> im = this.imagesRepo.findByPostId(blog.getId());
             blogPosts.add(new BlogRecord(blog, im));
         });

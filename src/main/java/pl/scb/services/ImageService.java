@@ -32,7 +32,7 @@ public class ImageService {
     private PageOwnerRepo pageOwnerRepo;
     @Autowired
     private FileManager fileManager;
-    @Value("domain")
+    @Value("${domain_name}")
     private String domain;
 
     public boolean uploadImage(long id, String categoryName, String owner,MultipartFile[] files) {

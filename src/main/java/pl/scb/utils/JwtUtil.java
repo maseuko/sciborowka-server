@@ -79,66 +79,31 @@ public class JwtUtil implements Serializable {
     }
 
     public boolean checkForTokensKeyPairExistence(String oldAuthToken, String oldRefreshToken){
-        long UID =  this.getUserIdFromToken(oldRefreshToken);
-        Optional<AdminModel> sciborowkaAdmin = this.adminRepo.findById(UID);
-        List<Optional<JwtTokens>> adminTokens = null;
-        if(sciborowkaAdmin.isPresent()){
-            adminTokens = this.jwtTokensRepo.findByUserId(UID);
-        }
-        if(adminTokens==null){return false;}
-        for(Optional<JwtTokens> tokenKeyPair : adminTokens){
-            if(tokenKeyPair.isPresent()){
-                if(tokenKeyPair.get().getAuthToken().equals(oldAuthToken) && tokenKeyPair.get().getRefreshToken().equals(oldRefreshToken)){
-                    return true;
-                }
-            }
-        }
-        return false;
+        Optional<JwtTokens> adminTokens = this.jwtTokensRepo.findByAuthTokenAndRefreshToken(oldAuthToken, oldRefreshToken);
+        return adminTokens.isPresent();
     }
 
     public Map<String, String> regenerateTokens(String oldAuthToken, String oldRefreshToken) throws IOException {
-        System.out.println(this.checkForTokensKeyPairExistence(oldAuthToken, oldRefreshToken));
-        boolean created = false;
         long UID =  this.getUserIdFromToken(oldRefreshToken);
         Optional<AdminModel> sciborowkaAdmin = this.adminRepo.findById(UID);
         Map<String, String> newTokens = null;
-        List<Optional<JwtTokens>> adminTokens = null;
+        Optional<JwtTokens> adminTokens = null;
         if(sciborowkaAdmin.isPresent()){
             newTokens = this.generateTokens(sciborowkaAdmin.get(), false);
-            adminTokens = this.jwtTokensRepo.findByUserId(UID);
+            adminTokens = this.jwtTokensRepo.findByAuthTokenAndRefreshTokenAndUserId(oldAuthToken, oldRefreshToken, UID);
         }
         if(sciborowkaAdmin.isEmpty()){
             throw new IOException("Invalid credentials.");
         }
-        if(adminTokens == null){
+        if(adminTokens.isEmpty()){
             throw new IOException("There are no tokens for that user.");
         }
-        for(Optional<JwtTokens> tokenKeyPair : adminTokens){
-            if(tokenKeyPair.isPresent()){
-                if(tokenKeyPair.get().getAuthToken().equals(oldAuthToken) && tokenKeyPair.get().getRefreshToken().equals(oldRefreshToken)){
-                    System.out.println("ZNALEZIONO");
-                    if(!this.checkForTokenValidity(oldAuthToken) && !this.checkForTokenValidity(oldRefreshToken)){
-
-                        this.jwtTokensRepo.delete(tokenKeyPair.get());
-                        throw new IOException("Invalid tokens.");
-                    }
-                    JwtTokens t = tokenKeyPair.get();
-                    t.setAuthToken(newTokens.get("authToken"));
-                    t.setRefreshToken(newTokens.get("refreshToken"));
-                    created = true;
-                    this.jwtTokensRepo.save(t);
-                    break;
-                }
-            }
-        }
-
-        if(!created){
-            throw new IOException("Invalid token keypair.");
-        }
-
+        JwtTokens actualTokens = adminTokens.get();
+        actualTokens.setRefreshToken(this.generateRefreshToken(sciborowkaAdmin.get()));
+        actualTokens.setAuthToken(this.generateAuthToken(sciborowkaAdmin.get()));
+        this.jwtTokensRepo.save(actualTokens);
+        newTokens.put("refresh", actualTokens.getRefreshToken());
+        newTokens.put("auth", actualTokens.getAuthToken());
         return newTokens;
     }
-
-
-
 }

@@ -6,9 +6,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import pl.scb.models.JwtTokens;
 import pl.scb.models.ResponseMessage;
 import pl.scb.models.AdminModel;
 import pl.scb.repo.AdminRepo;
+import pl.scb.repo.JwtTokensRepo;
 import pl.scb.services.SciborowkaAdminService;
 import pl.scb.utils.JwtUtil;
 
@@ -26,7 +28,7 @@ public class SciborowkaAuth {
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
-    private SciborowkaAdminService sciborowkaAdminService;
+    private JwtTokensRepo jwtTokensRepo;
 
     @PostMapping("sign-up")
     private ResponseEntity<Object> signUp(@RequestParam("login") String login, @RequestParam("password") String password){
@@ -37,14 +39,15 @@ public class SciborowkaAuth {
         if(!new BCryptPasswordEncoder().matches(password,admin.get().getPassword())) {
             return new ResponseMessage(HttpStatus.NOT_FOUND).sendMessage("Invalid credentials.");
         }
-
-        return new ResponseMessage(HttpStatus.OK).sendMessage("Signed in.", jwtUtil.generateTokens(admin.get(), true));
+        Map<String, String> tokens = jwtUtil.generateTokens(admin.get(), true);
+        return new ResponseMessage(HttpStatus.OK).sendMessage("Signed in.",tokens);
     }
 
-    @PostMapping("refresh-tokens")
-    private ResponseEntity<Object> refreshTokens(@RequestHeader("auth") String authToken, @RequestHeader("refresh") String refreshToken){
+    @GetMapping("refresh-tokens")
+    private ResponseEntity<Object> refreshTokens(@RequestParam("auth") String authToken, @RequestParam("refresh") String refreshToken){
         try {
-            return new ResponseMessage(HttpStatus.OK).sendMessage("Tokens refreshed.",this.jwtUtil.regenerateTokens(authToken, refreshToken));
+            Map<String, String> tokens = this.jwtUtil.regenerateTokens(authToken, refreshToken);
+            return new ResponseMessage(HttpStatus.OK).sendMessage("Tokens refreshed.",tokens);
         } catch (IOException e) {
             return new ResponseMessage(HttpStatus.EXPECTATION_FAILED).sendMessage("Invalid tokens.");
         }
@@ -56,5 +59,12 @@ public class SciborowkaAuth {
             return new ResponseMessage(HttpStatus.OK).sendMessage("Tokens are valid.");
         }
         return new ResponseMessage(HttpStatus.EXPECTATION_FAILED).sendMessage("Invalid tokens.");
+    }
+
+    @PostMapping("sign-out")
+    public ResponseEntity<Object> signOut(@RequestHeader("auth") String authToken, @RequestHeader("refresh") String refreshToken){
+        Optional<JwtTokens> tokens = this.jwtTokensRepo.findByAuthTokenAndRefreshToken(authToken, refreshToken);
+        tokens.ifPresent(jwtTokens -> this.jwtTokensRepo.deleteById(jwtTokens.getId()));
+        return new ResponseMessage(HttpStatus.ACCEPTED).sendMessage("Logged out.");
     }
 }

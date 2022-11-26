@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import pl.scb.models.Images;
 import pl.scb.models.ResponseMessage;
 import pl.scb.records.BlogRecord;
+import pl.scb.services.MainPageService;
 import pl.scb.services.SciborowkaClientService;
 
 import java.util.List;
@@ -17,6 +18,8 @@ import java.util.List;
 public class SciborowkaClientController {
     @Autowired
     private SciborowkaClientService sciborowkaClientService;
+    @Autowired
+    private MainPageService mainPageService;
 
     @GetMapping("get-posts")
     public ResponseEntity<Object> getPosts(@RequestParam("page") int page, @RequestParam("limit") int limit){
@@ -47,6 +50,11 @@ public class SciborowkaClientController {
     @GetMapping("categories")
     public ResponseEntity<Object> getCategories(){
         return new ResponseMessage(HttpStatus.OK).sendMessage("Categories fetched.", this.sciborowkaClientService.getCategories());
+    }
+
+    @GetMapping("main-page-config")
+    public ResponseEntity<Object> getMainPageConfig(){
+        return new ResponseMessage(HttpStatus.OK).sendMessage("Config fetched.",this.mainPageService.getDefaultPageConfig());
     }
 
 

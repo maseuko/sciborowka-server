@@ -24,7 +24,7 @@ public class FileManager {
     public FileManager(String fileLocation) {
         this.fileLocation = fileLocation;
     }
-    @Value("domain")
+    @Value("${domain_name}")
     private String domain;
 
     private void checkForDirectoryExistence(){
